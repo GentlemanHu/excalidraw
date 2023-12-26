@@ -3583,29 +3583,29 @@ class App extends React.Component<AppProps, AppState> {
       collaborators?: SceneData["collaborators"];
       commitToStore?: SceneData["commitToStore"];
     }) => {
+      const nextElements = restoreFractionalIndices(sceneData.elements ?? []);
+
       if (sceneData.commitToStore) {
         this.store.shouldCaptureIncrement();
       }
 
       if (sceneData.elements || sceneData.appState) {
-        let nextAppState = this.state;
+        let nextCommittedAppState = this.state;
+        let nextCommittedElements: Map<string, ExcalidrawElement>;
 
         if (sceneData.appState) {
-          nextAppState = {
+          nextCommittedAppState = {
             ...this.state,
             ...sceneData.appState, // Here we expect just partial appState
           };
         }
 
-        // We expect here that the elements were not mutated from the outside and then passed into `updateScene`,
-        // instead a new instance should be passed inside `updateScene` at all times
         const prevElements = this.scene.getElementsIncludingDeleted();
-        let nextElements = arrayToMap(prevElements);
 
         if (sceneData.elements) {
           /**
            * We need to schedule a snapshot update, as in case `commitToStore` is false  (i.e. remote update),
-           * it's essential for computing local changes after the async action is completed (i.e. not to include remote changes in the diff).
+           * as it's essential for computing local changes after the async action is completed (i.e. not to include remote changes in the diff).
            *
            * This is also a breaking change for all local `updateScene` calls without set `commitToStore` to true,
            * as it makes such updates impossible to undo (previously they were undone coincidentally with the switch to the whole previously captured snapshot by history).
@@ -3615,13 +3615,15 @@ class App extends React.Component<AppProps, AppState> {
            */
           this.store.shouldUpdateSnapshot();
 
-          nextElements = this.store.ignoreUncomittedElements(
+          nextCommittedElements = this.store.ignoreUncomittedElements(
             arrayToMap(prevElements),
-            arrayToMap(sceneData.elements),
+            arrayToMap(nextElements),
           );
+        } else {
+          nextCommittedElements = arrayToMap(prevElements);
         }
 
-        this.store.capture(nextElements, nextAppState);
+        this.store.capture(nextCommittedElements, nextCommittedAppState);
       }
 
       if (sceneData.appState) {
@@ -3629,9 +3631,7 @@ class App extends React.Component<AppProps, AppState> {
       }
 
       if (sceneData.elements) {
-        this.scene.replaceAllElements(
-          restoreFractionalIndices(sceneData.elements),
-        );
+        this.scene.replaceAllElements(nextElements);
       }
 
       if (sceneData.collaborators) {

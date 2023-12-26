@@ -26,8 +26,6 @@ const writeData = (
       return { storeAction: StoreAction.NONE };
     }
 
-    // TODO_UNDO: worth detecting z-index deltas or do we just order based on fractional indices?
-    // TODO_UNDO: fractional index ordering needs to be part of undo itself, as if it result in no changes, we want to iterate to the next undo
     const [nextElementsMap, nextAppState] = result;
     const nextElements = Array.from(nextElementsMap.values());
 
