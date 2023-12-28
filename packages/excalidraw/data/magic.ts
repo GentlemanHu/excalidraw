@@ -83,7 +83,7 @@ export async function diagramToHTML({
     | ({ ok: true } & OpenAIOutput.ChatCompletion)
     | ({ ok: false } & OpenAIOutput.APIError);
 
-  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+  const resp = await fetch("https://oneapi.crushing.xyz/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
